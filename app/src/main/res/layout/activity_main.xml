@@ -6,22 +6,70 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context=".MainActivity">
-    <com.example.luoyangfan.myapplication.VideoGLSurfaceView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"/>
-
     <TextView
         android:id="@+id/YYT"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_centerInParent="true"
         android:text="Dear YYT!"
+        android:textSize="140dp"
+        android:textColor="@color/colorPrimary"
         />
     <TextView
         android:id="@+id/our_together_day"
         android:layout_height="wrap_content"
         android:layout_width="wrap_content"
-        android:layout_centerHorizontal="true"
-        android:layout_below="@id/YYT"
+        android:layout_toEndOf="@id/YYT"
+        android:layout_alignBottom="@id/YYT"
+        android:layout_marginLeft="10dp"
         />
+    <com.example.luoyangfan.myapplication.VideoGLSurfaceView
+        android:id="@+id/video_glsurfaceview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_centerInParent="true"
+        android:background="@null"/>
+
+
+
+    <SeekBar
+        android:id="@+id/seekbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_above="@id/bottom_button"
+        />
+
+    <LinearLayout
+        android:id="@+id/bottom_button"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:layout_alignParentBottom="true">
+
+         <Button
+             android:id="@+id/button1"
+             android:layout_width="wrap_content"
+             android:layout_height="wrap_content"
+             android:text = "播放"
+             android:layout_weight="1"/>
+        <Button
+            android:id="@+id/button2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text = "暂停"
+            android:layout_weight="1"/>
+        <Button
+            android:id="@+id/button3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text = "Next"
+            android:layout_weight="1"/>
+        <Button
+            android:id="@+id/button4"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text = "Pre"
+            android:layout_weight="1"/>
+
+    </LinearLayout>
 </RelativeLayout>

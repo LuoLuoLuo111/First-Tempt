@@ -1,19 +1,33 @@
 package com.example.luoyangfan.myapplication;
 
+import android.app.Activity;
 import android.content.pm.PackageManager;
+import android.opengl.GLSurfaceView;
 import android.os.Environment;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
+import android.view.Surface;
+import android.view.ViewGroup;
+import android.widget.Button;
+import android.widget.RelativeLayout;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.io.File;
 import java.util.Calendar;
 import java.util.jar.Manifest;
 
-public class MainActivity extends AppCompatActivity {
+import okhttp3.OkHttpClient;
+
+public class MainActivity extends AppCompatActivity implements VideoGLSurfaceView.OnRenderGreatedListener {
     private final static String TAG = "MainActivity";
+    private VideoGLSurfaceView mVideoGLSurfaceView;
+    private Button button1, button2, button3, button4;
+    private SeekBar mSeekBar;
+
+    private VideoModel mVideoModel;
 
     private final static String WRITEPERMISSION = android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
     private final static String READPERMISSION = android.Manifest.permission.READ_EXTERNAL_STORAGE;
@@ -28,6 +42,13 @@ public class MainActivity extends AppCompatActivity {
         Log.v(TAG,"onCreate");
 
         setContentView(R.layout.activity_main);
+        mVideoGLSurfaceView = (VideoGLSurfaceView) findViewById(R.id.video_glsurfaceview);
+        ViewGroup.LayoutParams lp = mVideoGLSurfaceView.getLayoutParams();
+        lp.width = 1080;
+        lp.height = 498;
+        mVideoGLSurfaceView.setLayoutParams(lp);
+        mVideoGLSurfaceView.setRenderCreated(this);
+
         TextView tegetherDayView = (TextView)findViewById(R.id.our_together_day);
         tegetherDayView.setText(""+daysFromOurTogether());
     }
@@ -95,4 +116,10 @@ public class MainActivity extends AppCompatActivity {
 
     }
 
+    @Override
+    public void onRenderCreated(Surface surface) {
+        String path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/tencent/MicroMsg/WeiXin/wx_camera_1595249231978.mp4";
+        mVideoModel = new VideoModel(path, surface);
+        mVideoModel.prepare();
+    }
 }

@@ -30,11 +30,19 @@ public class VideoRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFra
 
     private final static String DRAW_FRAG_SHADER = "" +
             "#extension GL_OES_EGL_image_external : require\n" +
-            "precision mediump float;\n" +
-            "varying vec2 v_texPosition;\n" +
+            "precision highp float;\n" +
+            "varying highp vec2 v_texPosition;\n" +
             "uniform samplerExternalOES sTexture;\n" +
             "void main(){\n" +
-            "    gl_FragColor = texture2D(sTexture, v_texPosition);\n" +
+            "    vec2 uv = v_texPosition;\n" +
+            "    if(uv.y <= 0.5){\n" +
+            "         uv.y = uv.y * 2.0; \n" +
+            "    }else{\n"+
+            "         uv.y = (uv.y - 0.5) * 2.0; \n" +
+            "    }\n" +
+            "    vec4 texture = texture2D(sTexture, uv);\n" +
+            "    texture.a = 0.7; \n" +
+            "    gl_FragColor = texture;\n" +
             "}\n";
 
     private final float[] VertexData = {
@@ -45,10 +53,18 @@ public class VideoRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFra
     };
 
     private final float[] TextureData = {
-            0f, 1f,
-            1f, 1f,
-            0f, 0f,
-            1f, 0f
+            //0f, 1f,
+            //1f, 1f,
+            //0f, 0f,
+            //1f, 0f
+          0.0f,0.0f,
+
+
+           0.0f,1.0f,
+
+            1.0f,0.0f,
+
+            1.0f,1.0f
     };
 
     private FloatBuffer mVertexBuffer;
@@ -137,6 +153,8 @@ public class VideoRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFra
     public void onDrawFrame(GL10 gl10) {
         GLES20.glClear(GLES20.GL_COLOR_BUFFER_BIT);
         GLES20.glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+        GLES20.glEnable(GLES20.GL_BLEND);
+        GLES20.glBlendFunc(GLES20.GL_SRC_ALPHA, GLES20.GL_ONE_MINUS_SRC_ALPHA);
         renderMediacodec();
     }
 
