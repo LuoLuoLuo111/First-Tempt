@@ -4,6 +4,8 @@ import android.app.Activity;
 import android.content.pm.PackageManager;
 import android.opengl.GLSurfaceView;
 import android.os.Environment;
+import android.os.Handler;
+import android.os.Message;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -16,18 +18,23 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.io.File;
+import java.lang.ref.WeakReference;
 import java.util.Calendar;
 import java.util.jar.Manifest;
 
 import okhttp3.OkHttpClient;
 
-public class MainActivity extends AppCompatActivity implements VideoGLSurfaceView.OnRenderGreatedListener {
+public class MainActivity extends AppCompatActivity implements VideoGLSurfaceView.OnRenderGreatedListener, VideoModel.OnModelPTSUpdateListener {
     private final static String TAG = "MainActivity";
+
+    private final static int MSG_PTSUPDATE = 1;
+
     private VideoGLSurfaceView mVideoGLSurfaceView;
     private Button button1, button2, button3, button4;
     private SeekBar mSeekBar;
 
     private VideoModel mVideoModel;
+    private MainHandler mMainHandler;
 
     private final static String WRITEPERMISSION = android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
     private final static String READPERMISSION = android.Manifest.permission.READ_EXTERNAL_STORAGE;
@@ -43,12 +50,13 @@ public class MainActivity extends AppCompatActivity implements VideoGLSurfaceVie
 
         setContentView(R.layout.activity_main);
         mVideoGLSurfaceView = (VideoGLSurfaceView) findViewById(R.id.video_glsurfaceview);
+        mSeekBar = (SeekBar) findViewById(R.id.seekbar);
         ViewGroup.LayoutParams lp = mVideoGLSurfaceView.getLayoutParams();
         lp.width = 1080;
         lp.height = 498;
         mVideoGLSurfaceView.setLayoutParams(lp);
         mVideoGLSurfaceView.setRenderCreated(this);
-
+        mMainHandler = new MainHandler(this);
         TextView tegetherDayView = (TextView)findViewById(R.id.our_together_day);
         tegetherDayView.setText(""+daysFromOurTogether());
     }
@@ -121,5 +129,38 @@ public class MainActivity extends AppCompatActivity implements VideoGLSurfaceVie
         String path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/tencent/MicroMsg/WeiXin/wx_camera_1595249231978.mp4";
         mVideoModel = new VideoModel(path, surface);
         mVideoModel.prepare();
+        mVideoModel.setOnModePTSUpdateListener(this);
+    }
+
+    private static class MainHandler extends Handler{
+
+        private final WeakReference<MainActivity> mMainActivity;
+
+        MainHandler(MainActivity activity){
+            mMainActivity = new WeakReference<>(activity);
+        }
+        @Override
+        public void handleMessage(@NonNull Message msg) {
+            if(mMainActivity.get() == null) return;
+            switch (msg.what){
+                case MSG_PTSUPDATE:
+                    Log.v(TAG,"MSG_PTSUPDATE : "+msg.arg1+";"+(float)msg.obj);
+                    float ratio = (float) msg.obj;
+                    mMainActivity.get().mSeekBar.setProgress((int)(100 * ratio));
+                    break;
+                default:
+                    break;
+            }
+        }
+    }
+
+    @Override
+    public void onModelPTSUpdate(long pts, float ptsRatio) {
+         if(mSeekBar != null){
+             Message m = mMainHandler.obtainMessage(MSG_PTSUPDATE);
+             m.arg1 = (int)pts;
+             m.obj = (Float)ptsRatio;
+             mMainHandler.sendMessage(m);
+         }
     }
 }

@@ -16,6 +16,7 @@ import android.view.Surface;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.concurrent.ThreadLocalRandom;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class VideoDecode {
 
@@ -30,6 +31,9 @@ public class VideoDecode {
     private AudioTrack mAudioTrack;
 
     private String mPath;
+    private OnPtsListener mOnPtsListener;
+
+    private ReentrantLock mPauseLock = new ReentrantLock();
 
     public VideoDecode(String path, Surface  surface){
         Log.v(TAG,"lyfnew  VideoDecode!");
@@ -99,6 +103,14 @@ public class VideoDecode {
         mAudioTrack.play();
     }
 
+    public long getDuration(){
+        if(mMediaFormat != null){
+            return  mMediaFormat.getLong(MediaFormat.KEY_DURATION);
+        }else{
+            return -1;
+        }
+    }
+
     private class AudioDecodeThread extends Thread{
         @Override
         public void run() {
@@ -161,6 +173,7 @@ public class VideoDecode {
             boolean isEOS = false;
             long startMs = System.currentTimeMillis();
             while (true){
+
                 if(!isEOS){
                     isEOS = putBufferToDecode(inputBuffers);
                 }
@@ -178,6 +191,9 @@ public class VideoDecode {
 
                     default:
                         mDecoder.releaseOutputBuffer(outputIndex, true);
+                        if(mOnPtsListener != null){
+                            mOnPtsListener.onPtsUpdate(mediaCodecInfo.presentationTimeUs);
+                        }
 
                 }
                 sleepRender(mediaCodecInfo.presentationTimeUs, startMs);
@@ -255,5 +271,12 @@ public class VideoDecode {
 
     }
 
+    public void setmOnPtsListener(OnPtsListener l){
+        mOnPtsListener = l;
+    }
+
+    public interface OnPtsListener{
+        void onPtsUpdate(long ptsMs);
+    }
 
 }

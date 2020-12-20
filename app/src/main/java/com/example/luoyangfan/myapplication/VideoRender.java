@@ -6,6 +6,7 @@ import android.graphics.SurfaceTexture;
 import android.opengl.GLES11Ext;
 import android.opengl.GLES20;
 import android.opengl.GLSurfaceView;
+import android.util.Log;
 import android.view.Surface;
 
 import java.nio.ByteBuffer;
@@ -16,6 +17,8 @@ import javax.microedition.khronos.egl.EGLConfig;
 import javax.microedition.khronos.opengles.GL10;
 
 public class VideoRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFrameAvailableListener {
+
+    private final static String TAG = "VideoRender";
 
     private Context mContext;
 
@@ -140,6 +143,7 @@ public class VideoRender implements GLSurfaceView.Renderer, SurfaceTexture.OnFra
 
     @Override
     public void onSurfaceCreated(GL10 gl10, EGLConfig eglConfig) {
+        Log.v(TAG,"onSurfaceCreated");
         initGLRender();
 
     }
