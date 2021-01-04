@@ -1,11 +1,15 @@
 package com.example.luoyangfan.myapplication;
 
 import android.app.Activity;
+import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.database.Cursor;
+import android.net.Uri;
 import android.opengl.GLSurfaceView;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -30,6 +34,7 @@ public class MainActivity extends AppCompatActivity implements VideoGLSurfaceVie
     private final static int MSG_PTSUPDATE = 1;
 
     private VideoGLSurfaceView mVideoGLSurfaceView;
+    private Surface mSurface;
     private Button button1, button2, button3, button4;
     private SeekBar mSeekBar;
 
@@ -59,6 +64,21 @@ public class MainActivity extends AppCompatActivity implements VideoGLSurfaceVie
         mMainHandler = new MainHandler(this);
         TextView tegetherDayView = (TextView)findViewById(R.id.our_together_day);
         tegetherDayView.setText(""+daysFromOurTogether());
+        Button button = (Button) findViewById(R.id.mulu);
+        button.setOnClickListener(v ->{
+            Intent intent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Video.Media.EXTERNAL_CONTENT_URI);
+            startActivityForResult(intent, 1);
+        });
+        findViewById(R.id.button1).setOnClickListener(v -> {
+            if(mVideoModel != null){
+                mVideoModel.play();
+            }
+        });
+        findViewById(R.id.button2).setOnClickListener(v -> {
+            if(mVideoModel != null){
+                mVideoModel.pause();
+            }
+        });
     }
 
     protected void onResume(){
@@ -75,6 +95,24 @@ public class MainActivity extends AppCompatActivity implements VideoGLSurfaceVie
         requestPermissions();
     }
 
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == 1){
+            if(resultCode == RESULT_OK){
+                Uri uri = data.getData();
+                Log.v(TAG,"onActivityResult : ok uri = "+uri.toString() );
+                String[] projection = {MediaStore.Video.Media.DATA};
+                Cursor cursor = managedQuery(uri, projection, null, null, null);
+                int column_index = cursor
+                        .getColumnIndexOrThrow(MediaStore.Audio.Media.DATA);
+                cursor.moveToFirst();
+                String path = cursor.getString(column_index);
+                videoRender(path, mSurface);
+            }
+        }
+
+    }
 
     private int daysFromOurTogether(){
         Calendar togetherDay = Calendar.getInstance();
@@ -126,7 +164,12 @@ public class MainActivity extends AppCompatActivity implements VideoGLSurfaceVie
 
     @Override
     public void onRenderCreated(Surface surface) {
-        String path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/tencent/MicroMsg/WeiXin/wx_camera_1595249231978.mp4";
+        mSurface = surface;
+        //videoRender()
+    }
+
+    private void videoRender(String path, Surface surface){
+        //String path = Environment.getExternalStorageDirectory().getAbsolutePath()+"/tencent/MicroMsg/WeiXin/wx_camera_1595249231978.mp4";
         mVideoModel = new VideoModel(path, surface);
         mVideoModel.prepare();
         mVideoModel.setOnModePTSUpdateListener(this);

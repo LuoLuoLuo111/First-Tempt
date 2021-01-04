@@ -33,11 +33,15 @@ public class VideoModel implements VideoDecode.OnPtsListener {
     }
 
     public void play(){
-
+        if(mVideoDecode != null){
+            mVideoDecode.play();
+        }
     }
 
     public void pause(){
-        
+        if(mVideoDecode != null){
+            mVideoDecode.pause();
+        }
     }
 
     @Override

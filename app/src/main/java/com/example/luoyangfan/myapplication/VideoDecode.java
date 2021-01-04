@@ -103,6 +103,17 @@ public class VideoDecode {
         mAudioTrack.play();
     }
 
+    public void play(){
+        mPlayFlag = true;
+        synchronized (mPlayLock) {
+            mPlayLock.notifyAll();
+        }
+    }
+
+    public void pause(){
+         mPlayFlag = false;
+    }
+
     public long getDuration(){
         if(mMediaFormat != null){
             return  mMediaFormat.getLong(MediaFormat.KEY_DURATION);
@@ -110,6 +121,9 @@ public class VideoDecode {
             return -1;
         }
     }
+
+    private volatile boolean mPlayFlag = true;
+    private Object mPlayLock = new Object();
 
     private class AudioDecodeThread extends Thread{
         @Override
@@ -120,17 +134,24 @@ public class VideoDecode {
             ByteBuffer[] outputBuffers = mAudioDecoder.getOutputBuffers();
             boolean isEOS = false;
             long startMS = System.currentTimeMillis();
+            long pauseMSDur = 0L;
             Log.v(TAG,"lyfnew  audio run in 1");
-
             while (true){
+                if(!mPlayFlag){
+                    synchronized (mPlayLock) {
+                        try {
+                            long t = System.currentTimeMillis();
+                            mPlayLock.wait();
+                            pauseMSDur += System.currentTimeMillis() - t;
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
                 if(!isEOS){
                     isEOS = putBufferToAudioDecode(inputBuffers);
                 }
-                Log.v(TAG,"lyfnew  audio run in 2");
                 int outputIndex = mAudioDecoder.dequeueOutputBuffer(mediaCodecInfo, 1000);
-                Log.v(TAG,"lyfnew  audio run in 3");
-
-                Log.v(TAG,"lyfnew  audio outputIndex = "+outputIndex);
                 switch (outputIndex){
                     case MediaCodec.INFO_OUTPUT_FORMAT_CHANGED:
                         Log.v(TAG,"format changed!");
@@ -172,8 +193,19 @@ public class VideoDecode {
             ByteBuffer[] inputBuffers = mDecoder.getInputBuffers();
             boolean isEOS = false;
             long startMs = System.currentTimeMillis();
+            long pauseMSDur = 0L;
             while (true){
-
+                if(!mPlayFlag){
+                    synchronized (mPlayLock) {
+                        try {
+                            long t = System.currentTimeMillis();
+                            mPlayLock.wait();
+                            pauseMSDur += System.currentTimeMillis() - t;
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }
                 if(!isEOS){
                     isEOS = putBufferToDecode(inputBuffers);
                 }
@@ -196,7 +228,7 @@ public class VideoDecode {
                         }
 
                 }
-                sleepRender(mediaCodecInfo.presentationTimeUs, startMs);
+                sleepRender(mediaCodecInfo.presentationTimeUs, startMs+ pauseMSDur);
                 if(isEOS){
                     break;
                 }
@@ -216,10 +248,8 @@ public class VideoDecode {
         long ptsMs = pts/1000;
         long curMs = System.currentTimeMillis();
         if(curMs - startMs < ptsMs){
-
                 Thread.yield();
                 SystemClock.sleep(ptsMs - (curMs - startMs));
-
         }
 
     }
